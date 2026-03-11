@@ -15,7 +15,7 @@
   .catbtn { background: transparent; border: 1px solid #16162a; color: #454565; padding: 11px 14px; text-align: left; font-family: 'Orbitron', monospace; font-size: 9.5px; letter-spacing: 2px; cursor: pointer; transition: all .15s; width: 100%; border-radius: 5px; }
   .catbtn:hover { border-color: #00FFFF44; color: #9090b8; background: #0d0d1c; }
   .catbtn.on { border-color: #00FFFF; color: #00FFFF; background: rgba(0,255,255,.04); box-shadow: 0 0 12px rgba(0,255,255,.08); }
-  .vt { width: 62px; height: 62px; min-width: 62px; border: 2px solid #16162a; border-radius: 8px; background: #0d0d1c; cursor: pointer; display: flex; align-items: center; justify-content: center; overflow: hidden; transition: all .15s; flex-shrink: 0; }
+  .vt { width: 80px; height: 80px; min-width: 80px; border: 2px solid #16162a; border-radius: 8px; background: #0d0d1c; cursor: pointer; display: flex; align-items: center; justify-content: center; overflow: hidden; transition: all .15s; flex-shrink: 0; }
   .vt:hover { border-color: #FF008066; }
   .vt.on { border-color: #FF0080; box-shadow: 0 0 12px rgba(255,0,128,.3); }
   .ibtn { background: transparent; border: 1px solid #16162a; border-radius: 6px; padding: 8px; cursor: pointer; color: #b0b0d0; font-size: 13px; letter-spacing: 1px; transition: all .15s; display: flex; align-items: center; justify-content: center; gap: 6px; font-family: 'Orbitron', monospace; }
@@ -117,14 +117,14 @@ function CreatureDisplay({ variants, handsOn, colors, dancing }) {
   return (
     <svg width="100%" height="100%" viewBox="0 0 420 720" preserveAspectRatio="xMidYMid meet">
       <defs>
-        {/* Gradients */}
-        <linearGradient id="cg_body" x1="0" y1="0" x2="0" y2="1">
+        {/* Gradients — userSpaceOnUse so gradient is tight to each element's actual position */}
+        <linearGradient id="cg_body" x1="0" y1="358" x2="0" y2="688" gradientUnits="userSpaceOnUse">
           <stop offset="0%" stopColor={colors.body.s1}/><stop offset="100%" stopColor={colors.body.s2}/>
         </linearGradient>
-        <linearGradient id="cg_head" x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id="cg_head" x1="0" y1="80" x2="0" y2="345" gradientUnits="userSpaceOnUse">
           <stop offset="0%" stopColor={colors.head.s1}/><stop offset="100%" stopColor={colors.head.s2}/>
         </linearGradient>
-        <linearGradient id="cg_hands" x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id="cg_hands" x1="0" y1="418" x2="0" y2="492" gradientUnits="userSpaceOnUse">
           <stop offset="0%" stopColor={colors.hands.s1}/><stop offset="100%" stopColor={colors.hands.s2}/>
         </linearGradient>
         {/* Masks — white in PNG = show, transparent = hide */}
@@ -182,12 +182,12 @@ function ThumbPreview({ category, index, colors }) {
     return (
       <svg width="58" height="58" viewBox="0 0 420 720">
         <defs>
-          <linearGradient id={`th_h${hi}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={colors.head.s1}/><stop offset="100%" stopColor={colors.head.s2}/>
-          </linearGradient>
           <mask id={`th_hm${hi}`}>
             <image href={HEAD_MASK_FILES[hi]} width="420" height="720"/>
           </mask>
+          <linearGradient id={`th_h${hi}`} x1="0" y1="80" x2="0" y2="345" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor={colors.head.s1}/><stop offset="100%" stopColor={colors.head.s2}/>
+          </linearGradient>
         </defs>
         <rect width="420" height="720" fill={`url(#th_h${hi})`} mask={`url(#th_hm${hi})`}/>
         <image href={HEAD_OUTLINE_FILES[hi]} width="420" height="720"/>
@@ -260,7 +260,7 @@ function App() {
 
         {/* Variant tray */}
         {activeCategory && (
-          <div style={{background:'#09091a',borderTop:'1px solid #12122299',padding:'10px 18px',display:'flex',alignItems:'center',gap:10,overflowX:'auto',flexShrink:0,height:86}}>
+          <div style={{background:'#09091a',borderTop:'1px solid #12122299',padding:'10px 18px',display:'flex',alignItems:'center',gap:10,overflowX:'auto',flexShrink:0,height:104}}>
             <div className="lbl" style={{marginBottom:0,flexShrink:0,minWidth:70}}>{activeCategory}</div>
             {Array.from({length:CAT_COUNT[activeCategory]}).map((_,i)=>(
               <div key={i} className={`vt ${variants[CAT_KEY[activeCategory]]===i?'on':''}`}
