@@ -218,15 +218,20 @@ function App() {
   const [colorOpen, setColorOpen] = useState(false);
   const [colorTarget, setColorTarget] = useState('body');
   const [activeSlot, setActiveSlot]   = useState(1);
-  const [colors, setColors] = useState({
+  const savedColors = () => {
+    try { return JSON.parse(localStorage.getItem('creatureColors')) || null; } catch { return null; }
+  };
+  const [colors, setColors] = useState(savedColors() || {
     body:  { s1:'#FF0080', s2:'#8000FF' },
     head:  { s1:'#00FFFF', s2:'#0080FF' },
     hands: { s1:'#ffffff', s2:'#ffffff' },
   });
 
-  const applyColor = (c) => setColors(p => ({
-    ...p, [colorTarget]: { ...p[colorTarget], [activeSlot===1?'s1':'s2']: c }
-  }));
+  const applyColor = (c) => setColors(p => {
+    const next = { ...p, [colorTarget]: { ...p[colorTarget], [activeSlot===1?'s1':'s2']: c } };
+    localStorage.setItem('creatureColors', JSON.stringify(next));
+    return next;
+  });
   const toggleCat = (cat) => setActiveCategory(p => p===cat ? null : cat);
   const previewGrad = colors[colorTarget].s1 === colors[colorTarget].s2
     ? colors[colorTarget].s1
@@ -239,7 +244,9 @@ function App() {
       <div style={{width:155,background:'#09091a',borderRight:'1px solid #12122299',display:'flex',flexDirection:'column',padding:'22px 10px',gap:6,flexShrink:0,zIndex:10}}>
         <div className="lbl" style={{marginBottom:14}}>PARTS</div>
         {CATEGORIES.map(cat => (
-          <button key={cat} className={`catbtn ${activeCategory===cat?'on':''}`} onClick={()=>toggleCat(cat)}>
+          <button key={cat} className={`catbtn ${activeCategory===cat?'on':''}`}
+            onClick={()=>toggleCat(cat)}
+            onTouchEnd={(e)=>{e.preventDefault();toggleCat(cat);}}>
             {cat}
           </button>
         ))}
@@ -264,7 +271,8 @@ function App() {
             <div className="lbl" style={{marginBottom:0,flexShrink:0,minWidth:70}}>{activeCategory}</div>
             {Array.from({length:CAT_COUNT[activeCategory]}).map((_,i)=>(
               <div key={i} className={`vt ${variants[CAT_KEY[activeCategory]]===i?'on':''}`}
-                onClick={()=>setVariants(p=>({...p,[CAT_KEY[activeCategory]]:i}))}>
+                onClick={()=>setVariants(p=>({...p,[CAT_KEY[activeCategory]]:i}))}
+                onTouchEnd={(e)=>{e.preventDefault();setVariants(p=>({...p,[CAT_KEY[activeCategory]]:i}));}}>
                 <ThumbPreview category={activeCategory} index={i} colors={colors}/>
               </div>
             ))}
@@ -278,7 +286,7 @@ function App() {
         {/* Dance */}
         <div>
           <div className="lbl">VIBE</div>
-          <button className={`dance-btn ${dancing?'active':''}`} onClick={startDance}>
+          <button className={`dance-btn ${dancing?'active':''}`} onClick={startDance} onTouchEnd={(e)=>{e.preventDefault();startDance();}}>
             <span style={{fontSize:16}}>🕺</span>
             <span>{dancing ? 'DANCING!' : 'DANCE'}</span>
           </button>
@@ -287,7 +295,7 @@ function App() {
         {/* Hands */}
         <div>
           <div className="lbl">HANDS</div>
-          <button className={`ibtn ${handsOn?'glow':''}`} onClick={()=>setHandsOn(h=>!h)} style={{width:'100%',padding:'10px 8px'}}>
+          <button className={`ibtn ${handsOn?'glow':''}`} onClick={()=>setHandsOn(h=>!h)} onTouchEnd={(e)=>{e.preventDefault();setHandsOn(h=>!h);}} style={{width:'100%',padding:'10px 8px'}}>
             <span style={{fontSize:17}}>🖐️</span>
             <span style={{fontSize:9,letterSpacing:2}}>{handsOn?'ON':'OFF'}</span>
           </button>
@@ -297,7 +305,7 @@ function App() {
         <div style={{borderTop:'1px solid #12122299',paddingTop:18}}>
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:colorOpen?14:0}}>
             <div className="lbl" style={{marginBottom:0}}>COLOR</div>
-            <button className={`ibtn ${colorOpen?'glow':''}`} onClick={()=>setColorOpen(o=>!o)} style={{fontSize:18,padding:'6px 8px'}}>🎨</button>
+            <button className={`ibtn ${colorOpen?'glow':''}`} onClick={()=>setColorOpen(o=>!o)} onTouchEnd={(e)=>{e.preventDefault();setColorOpen(o=>!o);}} style={{fontSize:18,padding:'6px 8px'}}>🎨</button>
           </div>
           {colorOpen && (
             <div style={{display:'flex',flexDirection:'column',gap:12}}>
