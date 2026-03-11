@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Creature Customizer</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #07070f; }
+  .lbl { font-size: 8px; letter-spacing: 3px; color: #2a2a45; margin-bottom: 8px; font-family: 'Orbitron', monospace; }
+  .catbtn { background: transparent; border: 1px solid #16162a; color: #454565; padding: 11px 14px; text-align: left; font-family: 'Orbitron', monospace; font-size: 9.5px; letter-spacing: 2px; cursor: pointer; transition: all .15s; width: 100%; border-radius: 5px; }
+  .catbtn:hover { border-color: #00FFFF44; color: #9090b8; background: #0d0d1c; }
+  .catbtn.on { border-color: #00FFFF; color: #00FFFF; background: rgba(0,255,255,.04); box-shadow: 0 0 12px rgba(0,255,255,.08); }
+  .vt { width: 62px; height: 62px; min-width: 62px; border: 2px solid #16162a; border-radius: 8px; background: #0d0d1c; cursor: pointer; display: flex; align-items: center; justify-content: center; overflow: hidden; transition: all .15s; flex-shrink: 0; }
+  .vt:hover { border-color: #FF008066; }
+  .vt.on { border-color: #FF0080; box-shadow: 0 0 12px rgba(255,0,128,.3); }
+  .ibtn { background: transparent; border: 1px solid #16162a; border-radius: 6px; padding: 8px; cursor: pointer; color: #b0b0d0; font-size: 13px; letter-spacing: 1px; transition: all .15s; display: flex; align-items: center; justify-content: center; gap: 6px; font-family: 'Orbitron', monospace; }
+  .ibtn:hover { border-color: #00FFFF33; background: #0d0d1c; }
+  .ibtn.glow { border-color: #00FFFF; color: #00FFFF; box-shadow: 0 0 10px rgba(0,255,255,.15); }
+  .ibtn.pink { border-color: #FF0080; box-shadow: 0 0 10px rgba(255,0,128,.15); }
+  .cs { width: 50px; height: 50px; border-radius: 8px; border: 2px solid #222238; cursor: pointer; transition: all .15s; flex-shrink: 0; }
+  .cs:hover { border-color: #666; }
+  .cs.on { border-color: #fff; box-shadow: 0 0 12px rgba(255,255,255,.25); }
+  .sw { width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; transition: transform .1s, border-color .1s; flex-shrink: 0; }
+  .sw:hover { transform: scale(1.25); border-color: rgba(255,255,255,.5); }
+  ::-webkit-scrollbar { height: 3px; width: 3px; background: #0a0a14; }
+  ::-webkit-scrollbar-thumb { background: #222238; border-radius: 2px; }
+  @keyframes headSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  @keyframes armTeeter { 0%,100% { transform: rotate(-45deg); } 50% { transform: rotate(45deg); } }
+  .dancing-head { animation: headSpin 0.6s linear infinite; transform-origin: 210px 210px; transform-box: fill-box; }
+  .dancing-arms { animation: armTeeter 0.4s ease-in-out infinite; transform-origin: 210px 455px; transform-box: fill-box; }
+  .dance-btn { background: transparent; border: 2px solid #FFE000; border-radius: 6px; padding: 10px 8px; cursor: pointer; color: #FFE000; font-family: 'Orbitron', monospace; font-size: 9px; letter-spacing: 2px; width: 100%; transition: all .15s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .dance-btn:hover { background: rgba(255,224,0,.07); box-shadow: 0 0 14px rgba(255,224,0,.2); }
+  .dance-btn.active { background: rgba(255,224,0,.1); box-shadow: 0 0 18px rgba(255,224,0,.35); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useRef } = React;
+
+const NEON = ['#FF0080','#FF6600','#FFE000','#39FF14','#00FFFF','#0080FF','#8000FF','#FF00FF','#FF3333','#FFFFFF'];
+const CATEGORIES = ['HEAD','EYES','EYEBROWS','MOUTH','BACKGROUND'];
+const CAT_KEY = { HEAD:'head', EYES:'eyes', EYEBROWS:'eyebrows', MOUTH:'mouth', BACKGROUND:'bg' };
+const CAT_COUNT = { HEAD:8, EYES:9, EYEBROWS:2, MOUTH:13, BACKGROUND:3 };
+
+// ── FILE MAPPINGS ──
+const BG_FILES = [
+  'Untitled_Artwork-1.png',
+  'Untitled_Artwork-2.png',
+  'Untitled_Artwork-3.png',
+];
+
+// Head masks (white fill shape — gets colorized) paired with outlines (static on top)
+const HEAD_MASK_FILES = [
+  'Untitled_Artwork-2(1).png',
+  'Untitled_Artwork-5.png',
+  'Untitled_Artwork-7.png',
+  'Untitled_Artwork-12.png',
+  'Untitled_Artwork-13.png',
+  'Untitled_Artwork-18.png',
+  'Untitled_Artwork-29.png',
+  'Untitled_Artwork-31.png',
+];
+const HEAD_OUTLINE_FILES = [
+  'Untitled_Artwork-3(1).png',
+  'Untitled_Artwork-6.png',
+  'Untitled_Artwork-8.png',
+  'Untitled_Artwork-16.png',
+  'Untitled_Artwork-17.png',
+  'Untitled_Artwork-19.png',
+  'Untitled_Artwork-30.png',
+  'Untitled_Artwork-32.png',
+];
+
+const EYE_FILES = [
+  'Untitled_Artwork-4.png',
+  'Untitled_Artwork-22.png',
+  'Untitled_Artwork-23.png',
+  'Untitled_Artwork-27.png',
+  'Untitled_Artwork-28.png',
+  'Untitled_Artwork-33.png',
+  'Untitled_Artwork-34.png',
+  'Untitled_Artwork-35.png',
+  'Untitled_Artwork-36.png',
+];
+const EYEBROW_FILES = [
+  'Untitled_Artwork-37.png',
+  'Untitled_Artwork-38.png',
+];
+const MOUTH_FILES = [
+  'Untitled_Artwork-1(1).png',
+  'Untitled_Artwork-9.png',
+  'Untitled_Artwork-10.png',
+  'Untitled_Artwork-11.png',
+  'Untitled_Artwork-24.png',
+  'Untitled_Artwork-25.png',
+  'Untitled_Artwork-26.png',
+  'Untitled_Artwork-39.png',
+  'Untitled_Artwork-40.png',
+  'Untitled_Artwork-41.png',
+  'Untitled_Artwork-42.png',
+  'Untitled_Artwork-43.png',
+  'Untitled_Artwork-44.png',
+];
+
+// ── CREATURE DISPLAY ──
+// Layer order: body_mask → body_outline → hands_mask → hands_outline → head_mask → head_outline → eyes → eyebrows → mouth
+// SVG <mask> technique: white pixels in mask PNG = visible, transparent = hidden
+// Gradient rect is drawn through the mask to colorize
+function CreatureDisplay({ variants, handsOn, colors, dancing }) {
+  const hi = variants.head;
+  return (
+    <svg width="100%" height="100%" viewBox="0 0 420 720" preserveAspectRatio="xMidYMid meet">
+      <defs>
+        {/* Gradients */}
+        <linearGradient id="cg_body" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={colors.body.s1}/><stop offset="100%" stopColor={colors.body.s2}/>
+        </linearGradient>
+        <linearGradient id="cg_head" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={colors.head.s1}/><stop offset="100%" stopColor={colors.head.s2}/>
+        </linearGradient>
+        <linearGradient id="cg_hands" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={colors.hands.s1}/><stop offset="100%" stopColor={colors.hands.s2}/>
+        </linearGradient>
+        {/* Masks — white in PNG = show, transparent = hide */}
+        <mask id="body_m">
+          <image href="Untitled_Artwork-20.png" width="420" height="720"/>
+        </mask>
+        <mask id="hands_m">
+          <image href="Untitled_Artwork-14.png" width="420" height="720"/>
+        </mask>
+        <mask id={`head_m_${hi}`}>
+          <image href={HEAD_MASK_FILES[hi]} width="420" height="720"/>
+        </mask>
+      </defs>
+
+      {/* 1 — Body: gradient rect clipped by mask */}
+      <rect width="420" height="720" fill="url(#cg_body)" mask="url(#body_m)"/>
+      {/* 2 — Body outline: static on top */}
+      <image href="Untitled_Artwork-21.png" width="420" height="720"/>
+
+      {/* 3 — Hands: gradient rect clipped by mask */}
+      {handsOn && (
+        <g className={dancing ? 'dancing-arms' : ''}>
+          <rect width="420" height="720" fill="url(#cg_hands)" mask="url(#hands_m)"/>
+          {/* 4 — Hands outline */}
+          <image href="Untitled_Artwork-15.png" width="420" height="720"/>
+        </g>
+      )}
+
+      {/* 5+6+7+8+9 — Head group: mask, outline, eyes, brows, mouth all spin together */}
+      <g className={dancing ? 'dancing-head' : ''}>
+        {/* 5 — Head mask */}
+        <rect width="420" height="720" fill="url(#cg_head)" mask={`url(#head_m_${hi})`}/>
+        {/* 6 — Head outline */}
+        <image href={HEAD_OUTLINE_FILES[hi]} width="420" height="720"/>
+        {/* 7 — Eyes */}
+        <image href={EYE_FILES[variants.eyes]} width="420" height="720"/>
+        {/* 8 — Eyebrows */}
+        <image href={EYEBROW_FILES[variants.eyebrows]} width="420" height="720"/>
+        {/* 9 — Mouth */}
+        <image href={MOUTH_FILES[variants.mouth]} width="420" height="720"/>
+      </g>
+    </svg>
+  );
+}
+
+// ── THUMBNAILS ──
+function ThumbPreview({ category, index, colors }) {
+  if (category === 'BACKGROUND') {
+    return (
+      <img src={BG_FILES[index]} style={{width:'100%',height:'100%',objectFit:'cover',borderRadius:4}} alt=""/>
+    );
+  }
+  if (category === 'HEAD') {
+    const hi = index;
+    return (
+      <svg width="58" height="58" viewBox="0 0 420 720">
+        <defs>
+          <linearGradient id={`th_h${hi}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={colors.head.s1}/><stop offset="100%" stopColor={colors.head.s2}/>
+          </linearGradient>
+          <mask id={`th_hm${hi}`}>
+            <image href={HEAD_MASK_FILES[hi]} width="420" height="720"/>
+          </mask>
+        </defs>
+        <rect width="420" height="720" fill={`url(#th_h${hi})`} mask={`url(#th_hm${hi})`}/>
+        <image href={HEAD_OUTLINE_FILES[hi]} width="420" height="720"/>
+      </svg>
+    );
+  }
+  const fileMap = { EYES: EYE_FILES, EYEBROWS: EYEBROW_FILES, MOUTH: MOUTH_FILES };
+  return (
+    <svg width="58" height="58" viewBox="0 0 420 720">
+      <rect width="420" height="720" fill="#1a1a2e"/>
+      <image href={fileMap[category][index]} width="420" height="720"/>
+    </svg>
+  );
+}
+
+// ── APP ──
+function App() {
+  const [activeCategory, setActiveCategory] = useState(null);
+  const [dancing, setDancing] = useState(false);
+  const danceTimer = useRef(null);
+  const startDance = () => {
+    if (dancing) return;
+    setDancing(true);
+    danceTimer.current = setTimeout(() => setDancing(false), 5000);
+  };
+  const [variants, setVariants] = useState({ head:0, eyes:0, eyebrows:0, mouth:0, bg:0 });
+  const [handsOn, setHandsOn]   = useState(true);
+  const [colorOpen, setColorOpen] = useState(false);
+  const [colorTarget, setColorTarget] = useState('body');
+  const [activeSlot, setActiveSlot]   = useState(1);
+  const [colors, setColors] = useState({
+    body:  { s1:'#FF0080', s2:'#8000FF' },
+    head:  { s1:'#00FFFF', s2:'#0080FF' },
+    hands: { s1:'#ffffff', s2:'#ffffff' },
+  });
+
+  const applyColor = (c) => setColors(p => ({
+    ...p, [colorTarget]: { ...p[colorTarget], [activeSlot===1?'s1':'s2']: c }
+  }));
+  const toggleCat = (cat) => setActiveCategory(p => p===cat ? null : cat);
+  const previewGrad = colors[colorTarget].s1 === colors[colorTarget].s2
+    ? colors[colorTarget].s1
+    : `linear-gradient(to right, ${colors[colorTarget].s1}, ${colors[colorTarget].s2})`;
+
+  return (
+    <div style={{width:'100vw',height:'100vh',display:'flex',background:'#07070f',fontFamily:"'Orbitron',monospace",overflow:'hidden',color:'#b0b0d0',userSelect:'none'}}>
+
+      {/* LEFT SIDEBAR */}
+      <div style={{width:155,background:'#09091a',borderRight:'1px solid #12122299',display:'flex',flexDirection:'column',padding:'22px 10px',gap:6,flexShrink:0,zIndex:10}}>
+        <div className="lbl" style={{marginBottom:14}}>PARTS</div>
+        {CATEGORIES.map(cat => (
+          <button key={cat} className={`catbtn ${activeCategory===cat?'on':''}`} onClick={()=>toggleCat(cat)}>
+            {cat}
+          </button>
+        ))}
+      </div>
+
+      {/* CENTER */}
+      <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}}>
+        <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',overflow:'hidden',position:'relative',background:'#0a0a14'}}>
+          {/* Background image */}
+          <img src={BG_FILES[variants.bg]} style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',zIndex:0}} alt=""/>
+          {/* Scanline overlay */}
+          <div style={{position:'absolute',inset:0,backgroundImage:'repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.06) 2px,rgba(0,0,0,.06) 4px)',pointerEvents:'none',zIndex:1}}/>
+          {/* Creature — locked to 420:720 ratio */}
+          <div style={{position:'relative',zIndex:2,height:'100%',aspectRatio:'420/720',maxHeight:'100%',maxWidth:'100%'}}>
+            <CreatureDisplay variants={variants} handsOn={handsOn} colors={colors} dancing={dancing}/>
+          </div>
+        </div>
+
+        {/* Variant tray */}
+        {activeCategory && (
+          <div style={{background:'#09091a',borderTop:'1px solid #12122299',padding:'10px 18px',display:'flex',alignItems:'center',gap:10,overflowX:'auto',flexShrink:0,height:86}}>
+            <div className="lbl" style={{marginBottom:0,flexShrink:0,minWidth:70}}>{activeCategory}</div>
+            {Array.from({length:CAT_COUNT[activeCategory]}).map((_,i)=>(
+              <div key={i} className={`vt ${variants[CAT_KEY[activeCategory]]===i?'on':''}`}
+                onClick={()=>setVariants(p=>({...p,[CAT_KEY[activeCategory]]:i}))}>
+                <ThumbPreview category={activeCategory} index={i} colors={colors}/>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* RIGHT PANEL */}
+      <div style={{width:185,background:'#09091a',borderLeft:'1px solid #12122299',display:'flex',flexDirection:'column',padding:'22px 11px',gap:18,flexShrink:0,overflowY:'auto'}}>
+
+        {/* Dance */}
+        <div>
+          <div className="lbl">VIBE</div>
+          <button className={`dance-btn ${dancing?'active':''}`} onClick={startDance}>
+            <span style={{fontSize:16}}>🕺</span>
+            <span>{dancing ? 'DANCING!' : 'DANCE'}</span>
+          </button>
+        </div>
+
+        {/* Hands */}
+        <div>
+          <div className="lbl">HANDS</div>
+          <button className={`ibtn ${handsOn?'glow':''}`} onClick={()=>setHandsOn(h=>!h)} style={{width:'100%',padding:'10px 8px'}}>
+            <span style={{fontSize:17}}>🖐️</span>
+            <span style={{fontSize:9,letterSpacing:2}}>{handsOn?'ON':'OFF'}</span>
+          </button>
+        </div>
+
+        {/* Color */}
+        <div style={{borderTop:'1px solid #12122299',paddingTop:18}}>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:colorOpen?14:0}}>
+            <div className="lbl" style={{marginBottom:0}}>COLOR</div>
+            <button className={`ibtn ${colorOpen?'glow':''}`} onClick={()=>setColorOpen(o=>!o)} style={{fontSize:18,padding:'6px 8px'}}>🎨</button>
+          </div>
+          {colorOpen && (
+            <div style={{display:'flex',flexDirection:'column',gap:12}}>
+              <div style={{display:'flex',gap:5}}>
+                {[['body','🟧'],['head','🤖'],['hands','🔴']].map(([t,icon])=>(
+                  <button key={t} className={`ibtn ${colorTarget===t?'pink':''}`}
+                    onClick={()=>setColorTarget(t)}
+                    style={{flex:1,fontSize:18,padding:'7px 4px'}} title={t.toUpperCase()}>
+                    {icon}
+                  </button>
+                ))}
+              </div>
+              <div style={{display:'flex',gap:8,justifyContent:'center'}}>
+                <div className={`cs ${activeSlot===1?'on':''}`} style={{background:colors[colorTarget].s1}} onClick={()=>setActiveSlot(1)}/>
+                <div className={`cs ${activeSlot===2?'on':''}`} style={{background:colors[colorTarget].s2}} onClick={()=>setActiveSlot(2)}/>
+              </div>
+              <div style={{height:7,borderRadius:4,background:previewGrad,border:'1px solid #222238'}}/>
+              <div style={{display:'flex',flexWrap:'wrap',gap:6,justifyContent:'center'}}>
+                {NEON.map(c=>(
+                  <div key={c} className="sw" style={{background:c}} onClick={()=>applyColor(c)}/>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
